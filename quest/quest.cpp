@@ -1,6 +1,7 @@
 #include "com.h"
 #include "rgb.h"
 #include "rfid.h"
+#include "quest.h"
 #include "constants.h"
 
 // RGB
