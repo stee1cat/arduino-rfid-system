@@ -4,17 +4,14 @@
 
 #include <SPI.h>
 #include <rgb_matrix.h>
+#include <arduino.h>
 #include "constants.h"
 
 typedef void (*FunctionCallback)();
 
 extern rgb_matrix RGBMatrix;
-extern unsigned long time;
-extern unsigned int tick;
-extern unsigned char frameCounter;
-extern int currentAnimation;
-extern bool animationChanged;
-extern int animationState;
+extern unsigned int numberOfUser;
+extern unsigned int numberOfAuth;
 
 unsigned long frameStart();
 void frameEnd(unsigned long timeStart);

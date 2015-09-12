@@ -1,7 +1,13 @@
+#ifndef CONSTANTS_H
+
+#define CONSTANTS_H
+
 // Settings
 #define TIMEOUT 5000
-#define TICK_DELAY 100
+#define TICK_DELAY 100  // milliseconds
+#define SYNC_DELAY 1850 // microseconds
 #define BUFFER_SIZE 128
+#define MAX_USERS 4
 
 // Bytes
 #define STX 0x02
@@ -42,3 +48,5 @@
 #define AN_QUEUE_SIZE 10
 #define AN_ST_START 0
 #define AN_ST_END -1
+
+#endif

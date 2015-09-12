@@ -1,12 +1,19 @@
 #include "rgb.h"
 
 FunctionCallback animations[] = {
-    &animationWait,
-    &animationAccessGranted,
-    &animationAccessDenied,
-    &animationReadStart,
-    &animationReadEnd
+  &animationWait,
+  &animationAccessGranted,
+  &animationAccessDenied,
+  &animationReadStart,
+  &animationReadEnd
 };
+
+unsigned long time = 0;
+unsigned int tick = 0;
+unsigned char frameCounter = 0;
+int currentAnimation = AN_WAIT;
+bool animationChanged = false;
+int animationState = AN_ST_END;
 
 unsigned long frameStart() {
   frameCounter++;
@@ -16,8 +23,8 @@ unsigned long frameStart() {
 void frameEnd(unsigned long timeStart) {
   unsigned long timeEnd = micros();
   if (timeStart < timeEnd) {
-    if (timeEnd - timeStart < 500) {
-      delayMicroseconds(500 - (timeEnd - timeStart));
+    if (timeEnd - timeStart < SYNC_DELAY) {
+      delayMicroseconds(SYNC_DELAY - (timeEnd - timeStart));
     }
   }
 }
@@ -64,16 +71,51 @@ void rectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color, ui
   }
 }
 
-void animationWait() {
-  if (tick %5 == 0) {
+void blink(uint8_t color) {
+  if (isAnimationStart()) {
     RGBMatrix.clear();
+  }
+  animationState++;
+  if (animationState % 2 == 0) {
+    rectangle(0, 0, 7, 7, color, TOP_LAYER);
+  }
+  else {
+    RGBMatrix.clear();
+  }
+  if (animationState == 10) {
+    RGBMatrix.clear();
+    animationEnd();
+  }
+}
+
+void animationWait() {
+  int height = 0;
+  if (tick % 5 == 0) {
+    if (numberOfAuth) {
+      if (numberOfAuth != animationState) {
+        RGBMatrix.clear();
+        animationState = numberOfAuth;
+        for (int i = 0; i < numberOfAuth; i++) {
+          if (i == 0) {
+            rectangle(0, 0, 2, 2, GREEN, TOP_LAYER);
+          }
+          else if (i == 1) {
+            rectangle(0, 5, 2, 7, GREEN, TOP_LAYER);
+          }
+          else if (i == 2) {
+            rectangle(5, 0, 7, 2, GREEN, TOP_LAYER);
+          }
+          else if (i == 3) {
+            rectangle(5, 5, 7, 7, GREEN, TOP_LAYER);
+          }
+        }
+      }
+    }
   }
 }
 
 void animationReadStart() {
   if (isAnimationStart()) {
-    RGBMatrix.clear();
-    rectangle(0, 0, 7, 7, BLUE, TOP_LAYER);
     animationState++;
   }
 }
@@ -83,23 +125,9 @@ void animationReadEnd() {
 }
 
 void animationAccessGranted() {
-  if (isAnimationStart()) {
-    RGBMatrix.clear();
-    rectangle(0, 0, 7, 7, GREEN, TOP_LAYER);
-    animationState++;
-  }
-  if (tick % 20 == 0) {
-    animationEnd();
-  }
+  blink(GREEN);
 }
 
 void animationAccessDenied() {
-  if (isAnimationStart()) {
-    RGBMatrix.clear();
-    rectangle(0, 0, 7, 7, RED, TOP_LAYER);
-    animationState++;
-  }
-  if (tick % 20 == 0) {
-    animationEnd();
-  }
+  blink(RED);
 }

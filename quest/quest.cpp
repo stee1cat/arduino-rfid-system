@@ -6,12 +6,6 @@
 
 // RGB
 rgb_matrix RGBMatrix(RGB_N_X, RGB_N_Y, SPI_SDI_PIN, SPI_SCLK_PIN, RGB_LATCH_PIN);
-unsigned long time = 0;
-unsigned int tick = 0;
-unsigned char frameCounter = 0;
-int currentAnimation = AN_WAIT;
-bool animationChanged = false;
-int animationState = AN_ST_END;
 
 // Буфер для приёма данных
 int dataLength = 0;
@@ -20,10 +14,14 @@ unsigned char buffer[BUFFER_SIZE];
 // RFID
 SoftwareSerial RFID(RFID_RX_PIN, RFID_TX_PIN);
 unsigned char tag[RFID_TAG_SIZE];
+String tags[MAX_USERS];
 
 double sendingTime = 0;
 int currentState = ST_WAITING;
-int numberOfUser = 1;
+unsigned int numberOfUser = 1;
+unsigned int numberOfAuth = 0;
+
+bool doorIsOpen = false;
 
 void setup() {
   Serial.begin(9600);
@@ -57,8 +55,6 @@ void renderLoop() {
   }
   else if (currentState == ST_TAG_READ) {
     send("CHECK", tag, RFID_TAG_SIZE);
-    clearBuffer();
-    clearTag();
     currentState = ST_TAG_SEND;
     sendingTime = millis();
   }
@@ -92,11 +88,11 @@ void renderLoop() {
 }
 
 void runCommand() {
-  String message = getMessage();
+  String message = toString(buffer, dataLength);
   String command = parseCommand(message);
   String param = parseParam(message);
-  if (command.equals("players") && param.length()) {
-    numberOfUser = param.toInt();
+  if (command.equals("users") && param.length()) {
+    commandInit(param.toInt());
   }
   if (command.equals("access") && param.length()) {
     commandAccess(param.toInt());
@@ -104,19 +100,57 @@ void runCommand() {
   clearBuffer();
 }
 
+/**
+ * Выполняет инициализацию
+ *
+ * @param users Количество пользователей
+ */
+void commandInit(unsigned int users) {
+  String empty = "";
+  numberOfUser = (users >= 1 && users <= MAX_USERS)? users: 1;
+  numberOfAuth = 0;
+  doorIsOpen = false;
+  RGBMatrix.clear();
+  currentState = ST_WAITING;
+  for (int i = 0; i < MAX_USERS; i++) {
+    tags[i] = empty;
+  }
+}
+
+/**
+ * Обрабатывает результат предоставления доступа
+ *
+ * @param result
+ */
 void commandAccess(int result) {
-  if (result) {
+  if (result == 1) {
+    // Если авторизуется новый пользователь, то добавляем ключ в список
+    if (searchTag(tag, tags) == -1) {
+      tags[numberOfAuth] = toString(tag, RFID_TAG_SIZE);
+      numberOfAuth++;
+    }
+    if (numberOfAuth == numberOfUser) {
+      doorIsOpen = true;
+    }
     animation(AN_ACCESS_GRANTED);
   }
   else {
     animation(AN_ACCESS_DENIED);
   }
+  resetTag();
 }
 
-String getMessage() {
+/**
+ * Конвертация unsigned char в объект String
+ *
+ * @param string
+ * @param length
+ * @return String
+ */
+String toString(unsigned char *string, int length) {
   String result = "";
-  for (int i = 0; i < dataLength; i++) {
-    result.concat((char) buffer[i]);
+  for (int i = 0; i < length; i++) {
+    result.concat((char) string[i]);
   }
   return result;
 }
@@ -124,6 +158,7 @@ String getMessage() {
 String parseCommand(String message) {
   String command = message.substring(0, message.indexOf(' '));
   command.toLowerCase();
+  command.trim();
   return command;
 }
 

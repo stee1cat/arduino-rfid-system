@@ -58,11 +58,29 @@ bool readTag() {
 }
 
 /**
+ * Выполняет поиск тега в списке отсканированных
+ *
+ * @param tag Искомый тег
+ * @param tags Список отсканированных тегов
+ * @return int
+ */
+int searchTag(unsigned char *tag, String *tags) {
+  int result = -1;
+  String search = toString(tag, RFID_TAG_SIZE);
+  for (int index = 0; index < MAX_USERS; index++) {
+    if (tags[index].equalsIgnoreCase(search)) {
+      result = index;
+    }
+  }
+  return result;
+}
+
+/**
  * Удаляет прочитанный тег из буфера
  *
  * @return void
  */
-void clearTag() {
+void resetTag() {
   for (int i = 0; i < RFID_TAG_SIZE; i++) {
     tag[i] = NULL;
   }
