@@ -8,6 +8,7 @@
 #define SYNC_DELAY 1850 // microseconds
 #define BUFFER_SIZE 128
 #define MAX_USERS 4
+#define RELAY_PIN 7
 
 // Bytes
 #define STX 0x02

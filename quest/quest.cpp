@@ -27,6 +27,7 @@ void setup() {
   Serial.begin(9600);
   RFID.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(RELAY_PIN, OUTPUT);
 }
 
 void loop() {
@@ -111,6 +112,7 @@ void commandInit(unsigned int users) {
   numberOfAuth = 0;
   doorIsOpen = false;
   RGBMatrix.clear();
+  digitalWrite(RELAY_PIN, LOW);
   currentState = ST_WAITING;
   for (int i = 0; i < MAX_USERS; i++) {
     tags[i] = empty;
@@ -131,6 +133,7 @@ void commandAccess(int result) {
     }
     if (numberOfAuth == numberOfUser) {
       doorIsOpen = true;
+      digitalWrite(RELAY_PIN, HIGH);
     }
     animation(AN_ACCESS_GRANTED);
   }
